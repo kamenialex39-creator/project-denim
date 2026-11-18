@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   ShoppingBag,
@@ -6,6 +7,9 @@ import {
   ArrowUpRight,
   ArrowRight,
   Instagram,
+  Plus,
+  Minus,
+  Trash2,
 } from "lucide-react";
 
 const products = [
@@ -14,8 +18,7 @@ const products = [
     name: "Essential Baggy Denim",
     category: "DENIM / MEN",
     price: 899,
-    image:
-      "https://images.unsplash.com/photo-1542272604-787c3835535d?w=800",
+    image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=800",
     tag: "BESTSELLER",
   },
   {
@@ -23,8 +26,7 @@ const products = [
     name: "Vintage Blue Jacket",
     category: "OUTERWEAR",
     price: 1299,
-    image:
-      "https://images.unsplash.com/photo-1551537482-f2075a1d41f2?w=800",
+    image: "https://images.unsplash.com/photo-1551537482-f2075a1d41f2?w=800",
     tag: "NEW ARRIVAL",
   },
   {
@@ -32,8 +34,7 @@ const products = [
     name: "Classic Denim Fit",
     category: "DENIM / WOMEN",
     price: 999,
-    image:
-      "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=800",
+    image: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=800",
     tag: "ESSENTIAL",
   },
   {
@@ -41,8 +42,7 @@ const products = [
     name: "Urban Denim Shirt",
     category: "EVERYDAY WEAR",
     price: 749,
-    image:
-      "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=800",
+    image: "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=800",
     tag: "LIMITED",
   },
 ];
@@ -50,10 +50,7 @@ const products = [
 function App() {
   const [cart, setCart] = useState([]);
   const [menuOpen, setMenuOpen] = useState(false);
-
-  const addToCart = (product) => {
-    setCart((current) => [...current, product]);
-  };
+  const [cartOpen, setCartOpen] = useState(false);
 
   const money = (amount) =>
     new Intl.NumberFormat("en-ZA", {
@@ -61,6 +58,46 @@ function App() {
       currency: "ZAR",
       maximumFractionDigits: 0,
     }).format(amount);
+
+  const addToCart = (product) => {
+    setCart((current) => {
+      const existing = current.find((item) => item.id === product.id);
+
+      if (existing) {
+        return current.map((item) =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+
+      return [...current, { ...product, quantity: 1 }];
+    });
+
+    setCartOpen(true);
+  };
+
+  const updateQuantity = (id, change) => {
+    setCart((current) =>
+      current
+        .map((item) =>
+          item.id === id
+            ? { ...item, quantity: item.quantity + change }
+            : item
+        )
+        .filter((item) => item.quantity > 0)
+    );
+  };
+
+  const removeFromCart = (id) => {
+    setCart((current) => current.filter((item) => item.id !== id));
+  };
+
+  const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
+  const subtotal = cart.reduce(
+    (total, item) => total + item.price * item.quantity,
+    0
+  );
 
   return (
     <div className="site-shell">
@@ -89,10 +126,14 @@ function App() {
           <a href="#about" onClick={() => setMenuOpen(false)}>OUR STORY</a>
         </nav>
 
-        <a href="#shop" className="cart-link">
+        <button
+          className="cart-link"
+          onClick={() => setCartOpen(true)}
+          aria-label={`Open shopping bag, ${cartCount} items`}
+        >
           <ShoppingBag size={19} />
-          <span>BAG ({cart.length})</span>
-        </a>
+          <span>BAG ({cartCount})</span>
+        </button>
       </header>
 
       <main>
@@ -100,11 +141,7 @@ function App() {
           <div className="hero-image" />
           <div className="hero-content">
             <p className="eyebrow">THE NEW DENIM GENERATION</p>
-            <h1>
-              WEAR YOUR
-              <br />
-              <span>IDENTITY.</span>
-            </h1>
+            <h1>WEAR YOUR<br /><span>IDENTITY.</span></h1>
             <p className="hero-description">
               More than denim. A statement of culture,
               confidence and individuality.
@@ -147,13 +184,17 @@ function App() {
             <a href="#shop" className="collection-card collection-men">
               <span>01 / MEN</span>
               <h3>DENIM<br />FOR THE STREETS.</h3>
-              <span className="collection-cta">SHOP MEN <ArrowRight size={17} /></span>
+              <span className="collection-cta">
+                SHOP MEN <ArrowRight size={17} />
+              </span>
             </a>
 
             <a href="#shop" className="collection-card collection-women">
               <span>02 / WOMEN</span>
               <h3>MAKE YOUR<br />OWN RULES.</h3>
-              <span className="collection-cta">SHOP WOMEN <ArrowRight size={17} /></span>
+              <span className="collection-cta">
+                SHOP WOMEN <ArrowRight size={17} />
+              </span>
             </a>
           </div>
         </section>
@@ -218,12 +259,102 @@ function App() {
         </div>
 
         <div className="footer-social">
-          <a href="#home" aria-label="Instagram">
-            <Instagram />
-          </a>
+          <a href="#home" aria-label="Instagram"><Instagram /></a>
           <span>© 2026 PROJECTDENIM</span>
         </div>
       </footer>
+
+      {cartOpen && (
+        <div className="cart-overlay" onClick={() => setCartOpen(false)}>
+          <aside
+            className="cart-drawer"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="cart-heading">
+              <div>
+                <p className="eyebrow">YOUR SELECTION</p>
+                <h2>SHOPPING BAG ({cartCount})</h2>
+              </div>
+              <button
+                className="cart-close"
+                onClick={() => setCartOpen(false)}
+                aria-label="Close shopping bag"
+              >
+                <X />
+              </button>
+            </div>
+
+            {cart.length === 0 ? (
+              <div className="cart-empty">
+                <ShoppingBag size={36} />
+                <h3>Your bag is empty.</h3>
+                <p>Discover something worth wearing.</p>
+                <button
+                  className="primary-button"
+                  onClick={() => setCartOpen(false)}
+                >
+                  CONTINUE SHOPPING <ArrowRight size={17} />
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="cart-items">
+                  {cart.map((item) => (
+                    <div className="cart-item" key={item.id}>
+                      <img src={item.image} alt={item.name} />
+                      <div className="cart-item-details">
+                        <p>{item.category}</p>
+                        <h3>{item.name}</h3>
+                        <strong>{money(item.price)}</strong>
+
+                        <div className="quantity-control">
+                          <button
+                            onClick={() => updateQuantity(item.id, -1)}
+                            aria-label={`Decrease ${item.name} quantity`}
+                          >
+                            <Minus size={14} />
+                          </button>
+                          <span>{item.quantity}</span>
+                          <button
+                            onClick={() => updateQuantity(item.id, 1)}
+                            aria-label={`Increase ${item.name} quantity`}
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
+                      </div>
+                      <button
+                        className="remove-item"
+                        onClick={() => removeFromCart(item.id)}
+                        aria-label={`Remove ${item.name}`}
+                      >
+                        <Trash2 size={17} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="cart-summary">
+                  <div className="cart-subtotal">
+                    <span>SUBTOTAL</span>
+                    <strong>{money(subtotal)}</strong>
+                  </div>
+                  <p>Delivery costs are calculated at checkout.</p>
+                  <button className="checkout-button" disabled>
+                    CHECKOUT — COMING SOON
+                  </button>
+                  <button
+                    className="continue-shopping"
+                    onClick={() => setCartOpen(false)}
+                  >
+                    CONTINUE SHOPPING
+                  </button>
+                </div>
+              </>
+            )}
+          </aside>
+        </div>
+      )}
     </div>
   );
 }
