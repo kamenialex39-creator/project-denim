@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   ShoppingBag,
@@ -51,13 +52,6 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
 
-  const money = (amount) =>
-    new Intl.NumberFormat("en-ZA", {
-      style: "currency",
-      currency: "ZAR",
-      maximumFractionDigits: 0,
-    }).format(amount);
-
   const addToCart = (product) => {
     setCart((current) => {
       const existing = current.find((item) => item.id === product.id);
@@ -88,15 +82,28 @@ function App() {
     );
   };
 
-  const removeFromCart = (id) => {
+  const removeItem = (id) => {
     setCart((current) => current.filter((item) => item.id !== id));
   };
 
-  const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
+  const money = (amount) =>
+    new Intl.NumberFormat("en-ZA", {
+      style: "currency",
+      currency: "ZAR",
+      maximumFractionDigits: 0,
+    }).format(amount);
+
+  const cartCount = cart.reduce(
+    (total, item) => total + item.quantity,
+    0
+  );
+
   const subtotal = cart.reduce(
     (total, item) => total + item.price * item.quantity,
     0
   );
+
+  const deliveryRemaining = Math.max(1500 - subtotal, 0);
 
   return (
     <div className="site-shell">
@@ -140,7 +147,11 @@ function App() {
           <div className="hero-image" />
           <div className="hero-content">
             <p className="eyebrow">THE NEW DENIM GENERATION</p>
-            <h1>WEAR YOUR<br /><span>IDENTITY.</span></h1>
+            <h1>
+              WEAR YOUR
+              <br />
+              <span>IDENTITY.</span>
+            </h1>
             <p className="hero-description">
               More than denim. A statement of culture,
               confidence and individuality.
@@ -220,6 +231,7 @@ function App() {
                     ADD TO BAG +
                   </button>
                 </div>
+
                 <div className="product-info">
                   <div>
                     <p>{product.category}</p>
@@ -258,7 +270,9 @@ function App() {
         </div>
 
         <div className="footer-social">
-          <a href="#home" aria-label="Instagram"><Instagram /></a>
+          <a href="#home" aria-label="Instagram">
+            <Instagram />
+          </a>
           <span>© 2026 PROJECTDENIM</span>
         </div>
       </footer>
@@ -268,8 +282,9 @@ function App() {
           <aside
             className="cart-drawer"
             onClick={(event) => event.stopPropagation()}
+            aria-label="Shopping bag"
           >
-            <div className="cart-heading">
+            <div className="cart-header">
               <div>
                 <p className="eyebrow">YOUR SELECTION</p>
                 <h2>SHOPPING BAG ({cartCount})</h2>
@@ -279,28 +294,48 @@ function App() {
                 onClick={() => setCartOpen(false)}
                 aria-label="Close shopping bag"
               >
-                <X />
+                <X size={23} />
               </button>
             </div>
 
             {cart.length === 0 ? (
               <div className="cart-empty">
-                <ShoppingBag size={36} />
-                <h3>Your bag is empty.</h3>
-                <p>Discover something worth wearing.</p>
+                <ShoppingBag size={42} strokeWidth={1} />
+                <h3>YOUR BAG IS EMPTY</h3>
+                <p>Looks like you haven't found your fit yet.</p>
                 <button
                   className="primary-button"
-                  onClick={() => setCartOpen(false)}
+                  onClick={() => {
+                    setCartOpen(false);
+                    document.getElementById("shop")?.scrollIntoView({
+                      behavior: "smooth",
+                    });
+                  }}
                 >
-                  CONTINUE SHOPPING <ArrowRight size={17} />
+                  EXPLORE THE COLLECTION <ArrowUpRight size={17} />
                 </button>
               </div>
             ) : (
               <>
+                <div className="delivery-message">
+                  {deliveryRemaining > 0
+                    ? `You're ${money(deliveryRemaining)} away from free delivery.`
+                    : "You've unlocked free delivery!"}
+                  <div className="delivery-track">
+                    <div
+                      className="delivery-progress"
+                      style={{
+                        width: `${Math.min((subtotal / 1500) * 100, 100)}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+
                 <div className="cart-items">
                   {cart.map((item) => (
-                    <div className="cart-item" key={item.id}>
+                    <article className="cart-item" key={item.id}>
                       <img src={item.image} alt={item.name} />
+
                       <div className="cart-item-details">
                         <p>{item.category}</p>
                         <h3>{item.name}</h3>
@@ -322,25 +357,34 @@ function App() {
                           </button>
                         </div>
                       </div>
-                      <button
-                        className="remove-item"
-                        onClick={() => removeFromCart(item.id)}
-                        aria-label={`Remove ${item.name}`}
-                      >
-                        <Trash2 size={17} />
-                      </button>
-                    </div>
+
+                      <div className="cart-item-actions">
+                        <strong>{money(item.price * item.quantity)}</strong>
+                        <button
+                          className="remove-item"
+                          onClick={() => removeItem(item.id)}
+                          aria-label={`Remove ${item.name}`}
+                        >
+                          <Trash2 size={17} />
+                        </button>
+                      </div>
+                    </article>
                   ))}
                 </div>
 
-                <div className="cart-summary">
-                  <div className="cart-subtotal">
+                <div className="cart-footer">
+                  <div className="subtotal-row">
                     <span>SUBTOTAL</span>
                     <strong>{money(subtotal)}</strong>
                   </div>
-                  <p>Delivery costs are calculated at checkout.</p>
-                  <button className="checkout-button" disabled>
-                    CHECKOUT — COMING SOON
+                  <p>Delivery and taxes calculated at checkout.</p>
+                  <button
+                    className="checkout-button"
+                    onClick={() =>
+                      alert("Checkout integration is coming next. Your bag is ready!")
+                    }
+                  >
+                    PROCEED TO CHECKOUT <ArrowUpRight size={18} />
                   </button>
                   <button
                     className="continue-shopping"
